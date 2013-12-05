@@ -41,6 +41,7 @@
       // 'private' properties
       this._map = this._createMap(mapId, mapDiv, config, gMContainer, $scope);
       this._markers = {};
+      this._circles = {};
       this._polylines = {};
       this._listeners = {};
 
@@ -178,6 +179,14 @@
       var self = this;
       angular.forEach(scopeIds, function(scopeId) {
         self.forEachMarkerInScope(scopeId, function(marker, hash) {
+          self.removeMarkerByHash(scopeId, hash);
+        });
+      });
+
+      scopeIds = Object.keys(this._circles);
+      self = this;
+      angular.forEach(scopeIds, function(scopeId) {
+        self.forEachMarkerInScope(scopeId, function(circle, hash) {
           self.removeMarkerByHash(scopeId, hash);
         });
       });
@@ -391,6 +400,152 @@
         angular.forEach(this._markers[scopeId], function(marker, hash) {
             if (marker != null) {
                 fn(marker, hash);
+            }
+        });
+    };
+
+
+    /**
+     * Adds a new circle to the map.
+     * @param {number} scope id
+     * @param {google.maps.CircleOptions} circleOptions
+     * @return {boolean} true if a circle was added, false if there was already
+     *   a circle at this center. 'at this center' means delta_lat and
+     *   delta_lng are < 0.0005
+     * @throw if circleOptions does not have all required options (i.e. center)
+     * @ignore
+     */
+    this.addCircle = function(scopeId, circleOptions) {
+      var opts = {};
+      angular.extend(opts, circleOptions);
+
+      if (!(opts.center instanceof google.maps.LatLng)) {
+        throw 'circleOptions did not contain a center';
+      }
+
+      var circle = new angulargmDefaults.circleConstructor(opts);
+      var center = circle.getCenter();
+      if (this.hasCircle(scopeId, center.lat(), center.lng())) {
+        return false;
+      }
+
+      var hash = center.toUrlValue(this.precision);
+      if (this._circles[scopeId] == null) {
+          this._circles[scopeId] = {};
+      }
+      this._circles[scopeId][hash] = circle;
+      circle.setMap(this._map);
+      return true;
+    };
+
+    /**
+     * @param {number} scope id
+     * @param {number} lat
+     * @param {number} lng
+     * @return {boolean} true if there is a circle with the given lat and lng
+     * @ignore
+     */
+    this.hasCircle = function(scopeId, lat, lng) {
+      return (this.getCircle(scopeId, lat, lng) instanceof google.maps.Circle);
+    };
+
+
+    /**
+     * @param {number} scope id
+     * @param {number} lat
+     * @param {number} lng
+     * @return {google.maps.Circle} the circle at given lat and lng, or null if
+     *   no such circle exists
+     * @ignore
+     */
+    this.getCircle = function (scopeId, lat, lng) {
+      if (lat == null || lng == null)
+        throw 'lat or lng was null';
+
+      var latLng = new google.maps.LatLng(lat, lng);
+      var hash = latLng.toUrlValue(this.precision);
+      if (this._circles[scopeId] != null && hash in this._circles[scopeId]) {
+        return this._circles[scopeId][hash];
+      } else {
+        return null;
+      }
+    };
+
+
+    /**
+     * @param {number} scope id
+     * @param {number} lat
+     * @param {number} lng
+     * @return {boolean} true if a circle was removed, false if nothing
+     *   happened
+     * @ignore
+     */
+    this.removeCircle = function(scopeId, lat, lng) {
+      if (lat == null || lng == null)
+        throw 'lat or lng was null';
+
+      var latLng = new google.maps.LatLng(lat, lng);
+
+      var hash = latLng.toUrlValue(this.precision);
+      return this.removeCircleByHash(scopeId, hash);
+    };
+
+    /**
+     *
+     * @param {number} scope id
+     * @param {string} hash
+     * @returns {boolean} true if a circle was removed, false if nothing
+     *   happened
+     * @ignore
+     */
+    this.removeCircleByHash = function(scopeId, hash) {
+        var removed = false;
+        var circle = this._circles[scopeId][hash];
+        if (circle) {
+            circle.setMap(null);
+            removed = true;
+        }
+        this._circles[scopeId][hash] = null;
+        delete this._circles[scopeId][hash];
+        return removed;
+    };
+
+
+    /**
+     * Applies a function to each circle.
+     * @param {Function} fn will called with circle as first argument
+     * @throw if fn is null or undefined
+     * @ignore
+     */
+    this.forEachCircle = function(fn) {
+      if (fn == null) { throw 'fn was null or undefined'; }
+      var that = this;
+      var allCircles = Object.keys(this._circles).reduce(function(circles, key){
+          angular.forEach(that._circles[key], function(circle){
+              circles.push(circle);
+          });
+          return circles;
+      }, []);
+      angular.forEach(allCircles, function(circle, hash) {
+        if (circle != null) {
+          fn(circle, hash);
+        }
+      });
+    };
+
+
+    /**
+     * Applies a function to each circle.
+     * @param {number} scope id
+     * @param {Function} fn will called with circle as first argument
+     * @throw if fn is null or undefined
+     * @ignore
+     */
+    this.forEachCircleInScope = function(scopeId, fn) {
+        if (fn == null) { throw 'fn was null or undefined'; }
+        angular.forEach(this._circles[scopeId], function(circle, hash) {
+            if (circle != null) {
+                fn(circle, hash);
             }
         });
     };

@@ -2,9 +2,9 @@
  * @ngdoc directive
  * @name angulargm.directive:gmMap
  * @element ANY
- * 
+ *
  * @description
- * A directive for embedding google maps into your app. 
+ * A directive for embedding google maps into your app.
  *
  * `gm-map-id` is required. The `gm-center`, `gm-zoom`, `gm-bounds`, and
  * `gm-map-type-id` variables do not have to exist in the current scope--they
@@ -45,7 +45,7 @@
  *
  * @param {expression} gm-on-*event* an angular expression which evaluates to
  * an event handler. This handler will be attached to each marker's \*event\*
- * event.  The variables 'map' and 'event' evaluate to the map and the
+ * event and circle's \*event\* event.  The variables 'map' and 'event' evaluate to the map and the
  * [google.maps.MouseEvent](https://developers.google.com/maps/documentation/javascript/reference#MouseEvent),
  * respectively. The map is always passed in, but the MouseEvent is only passed in if the event emits it.  For example:
  * ```html
@@ -76,7 +76,7 @@
   angular.module('AngularGM').
 
   directive('gmMap', ['$timeout', 'angulargmUtils', function ($timeout, angulargmUtils) {
-  
+
     /** link function **/
     var getEventHandlers = angulargmUtils.getEventHandlers;
 
@@ -183,7 +183,7 @@
           }
         }, true);
       }
-      
+
       if (hasZoom) {
         scope.$watch('gmZoom', function (newValue, oldValue) {
           var ok = (newValue != null && !isNaN(newValue));
@@ -199,7 +199,7 @@
           if (changed && !controller.dragging) {
             var bounds = newValue;
             if (bounds)
-              controller.bounds = bounds; 
+              controller.bounds = bounds;
           }
         });
       }
@@ -226,9 +226,9 @@
     return {
       restrict: 'AE',
       priority: 100,
-      template: '<div>' + 
-                  '<div id="" style="width:100%;height:100%;"></div>' + 
-                  '<div ng-transclude></div>' + 
+      template: '<div>' +
+                  '<div id="" style="width:100%;height:100%;"></div>' +
+                  '<div ng-transclude></div>' +
                 '</div>',
       transclude: true,
       replace: true,

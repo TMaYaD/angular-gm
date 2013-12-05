@@ -3,10 +3,10 @@
  * @name angulargm
  *
  * @description
- * Module for embedding Google Maps into AngularJS applications. 
+ * Module for embedding Google Maps into AngularJS applications.
  *
  * # Example Plunkers ([fullscreen](http://embed.plnkr.co/PYDYjVuRHaJpdntoJtqL))
- *  
+ *
  * <iframe style="width: 100%; height: 400px" src="http://embed.plnkr.co/PYDYjVuRHaJpdntoJtqL" frameborder="0" allowfullscreen="allowfullscreen">
  * </iframe>
  *
@@ -31,6 +31,7 @@
    *     return angular.extend($delegate, {
    *       'precision': 3,
    *       'markerConstructor': myCustomMarkerConstructor,
+   *       'circleConstructor': myCustomCircleConstructor,
    *       'polylineConstructor': myCustomPolylineConstructor,
    *       'mapOptions': {
    *         center: new google.maps.LatLng(55, 111),
@@ -46,10 +47,11 @@
     return {
       'precision': 3,
       'markerConstructor': google.maps.Marker,
+      'circleConstructor': google.maps.Circle,
       'polylineConstructor': google.maps.Polyline,
       'mapOptions': {
         zoom : 8,
-        center : new google.maps.LatLng(46, -120),
+        center : new google.maps.LatLng(19, 78),
         mapTypeId : google.maps.MapTypeId.ROADMAP
       }
     };
