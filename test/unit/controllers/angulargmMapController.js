@@ -81,10 +81,10 @@ describe('angulargmMapController', function() {
     map.setZoom(gmMapOptions.zoom + 2);
     map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
     expect(mapCtrl.center).toEqual(newCenter); // sanity check--we actually changed something
-   
+
     // destroy scope
     scope.$destroy();
-    
+
     // re-instantiate controller
     mapCtrl = $controller('angulargmMapController', {$scope: scope2, $element: elm});
 
@@ -99,9 +99,19 @@ describe('angulargmMapController', function() {
     scope.$destroy();
     numMarkers = 0;
     mapCtrl.forEachMarker(function(marker) {
-      numMarkers++;  
+      numMarkers++;
     });
     expect(numMarkers).toEqual(0);
+  });
+
+  it('removes circles on scope destroy', function() {
+    var mapId = scope.gmMapId();
+    scope.$destroy();
+    numCircles = 0;
+    mapCtrl.forEachCircle(function(circle) {
+      numCircles++;
+    });
+    expect(numCircles).toEqual(0);
   });
 
 
@@ -203,7 +213,6 @@ describe('angulargmMapController', function() {
     expect(callCount).toEqual(1);
   });
 
-
   describe('marker functions', function() {
     var position, positionSame, positionVeryClose, position2;
     var markerOptions, markerOptionsSame, markerOptionsVeryClose, markerOptions2;
@@ -239,7 +248,7 @@ describe('angulargmMapController', function() {
         expect(added).toBeTruthy();
       });
 
-      
+
       it('does not add markers already on the map', function() {
         var added = mapCtrl.addMarker(scope, markerOptions);
         expect(added).toBeFalsy();
@@ -320,6 +329,129 @@ describe('angulargmMapController', function() {
       mapCtrl.removeMarker(scope, 1, 2);
       var called = false;
       mapCtrl.forEachMarker(function(marker) {
+        called = true;
+      });
+      expect(called).toBeFalsy();
+    });
+
+  });
+
+  describe('circle functions', function() {
+    var center, centerSame, centerVeryClose, center2;
+    var circleOptions, circleOptionsSame, circleOptionsVeryClose, circleOptions2;
+
+    beforeEach(function() {
+      center = new google.maps.LatLng(1, 2);
+      centerSame = new google.maps.LatLng(1.0004, 2.0004);
+      centerVeryClose = new google.maps.LatLng(1.0005, 2.0005);
+      center2 = new google.maps.LatLng(3, 4);
+
+      scope = 'scope';
+
+      circleOptions = {
+        center: center
+      };
+      circleOptionsSame = {
+        center: centerSame
+      };
+      circleOptionsVeryClose = {
+        center: centerVeryClose
+      };
+      circleOptions2 = {
+        center: center2
+      };
+
+      mapCtrl.addCircle(scope, circleOptions);
+    });
+
+    describe('addCircle', function() {
+
+      it('adds new circles to the map', function() {
+        added = mapCtrl.addCircle(scope, circleOptions2);
+        expect(added).toBeTruthy();
+      });
+
+
+      it('does not add circles already on the map', function() {
+        var added = mapCtrl.addCircle(scope, circleOptions);
+        expect(added).toBeFalsy();
+      });
+
+
+      it('adds circles which differ by at least 0.0005', function() {
+        var added = mapCtrl.addCircle(scope, circleOptionsVeryClose);
+        expect(added).toBeTruthy();
+      });
+
+
+      it('does not add circles which differ less than 0.0005', function() {
+        var added = mapCtrl.addCircle(scope, circleOptionsSame);
+        expect(added).toBeFalsy();
+      });
+
+    });
+
+
+    describe('getCircle', function() {
+
+      it('retrieves circles that are on the map', function() {
+        var circle = mapCtrl.getCircle(scope, center.lat(), center.lng());
+        expect(circle.getCenter()).toEqual(circleOptions.center);
+      });
+
+
+      it('returns null for circle not on the map', function() {
+        var circle = mapCtrl.getCircle(scope, center2.lat(), center2.lng());
+        expect(circle).toBeNull();
+      });
+
+
+      it('retrives circles given a lat and lng that are within 0.0005', function() {
+        var circle = mapCtrl.getCircle(scope, centerSame.lat(), centerSame.lng());
+        expect(circle.getCenter()).toEqual(circleOptions.center);
+      });
+
+
+      it('does not retrieve circle given lat and lng more than 0.0005 away', function() {
+        var circle = mapCtrl.getCircle(scope, centerVeryClose.lat(), centerVeryClose.lng());
+        expect(circle).toBeNull();
+      });
+
+    });
+
+
+    describe('removeCircle', function() {
+
+      it('removes circles from the map', function() {
+        var removed = mapCtrl.removeCircle(scope, center.lat(), center.lng());
+        expect(removed).toBeTruthy();
+        expect(mapCtrl.getCircle(scope, center.lat(), center.lng())).toBeNull();
+      });
+
+
+      it('does not remove circles not on the map', function() {
+        var removed = mapCtrl.removeCircle(scope, center2.lat(), center2.lng());
+        expect(removed).toBeFalsy();
+        expect(mapCtrl.getCircle(scope, center.lat(), center.lng())).not.toBeNull();
+      });
+
+    });
+
+
+    it('can apply a function to each circle', function() {
+      circles = [];
+      mapCtrl.forEachCircle(function(circle) {
+        circles.push(circle);
+      });
+      expect(circles.length).toEqual(1);
+      expect(circles[0].getCenter()).toEqual(circleOptions.center);
+    });
+
+
+    it('does not apply a function to removed circles', function() {
+      mapCtrl.removeCircle(scope, 1, 2);
+      var called = false;
+      mapCtrl.forEachCircle(function(circle) {
         called = true;
       });
       expect(called).toBeFalsy();
