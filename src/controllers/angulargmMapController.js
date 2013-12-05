@@ -186,8 +186,8 @@
       scopeIds = Object.keys(this._circles);
       self = this;
       angular.forEach(scopeIds, function(scopeId) {
-        self.forEachMarkerInScope(scopeId, function(circle, hash) {
-          self.removeMarkerByHash(scopeId, hash);
+        self.forEachCircleInScope(scopeId, function(circle, hash) {
+          self.removeCircleByHash(scopeId, hash);
         });
       });
     };
